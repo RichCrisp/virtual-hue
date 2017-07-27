@@ -179,10 +179,23 @@ def get_light_state(nr):
     return lights[nr]['state']
 
 def gen_ind_light_json(nr):
+    s = get_light_state(nr)
+
+    bri = 0
+    if s:
+       bri = 255
 
     state = {
-        'on': get_light_state(nr),
-        'reachable': True
+        'hue': 50000,
+        'on': s,
+        "effect": "none",
+        "alert": "none",
+        "bri": bri,
+        "sat": 255,
+        "ct": 500,
+        "xy": [0.5, 0.5],
+        "reachable": True,
+        "colormode": "hs"
     }
     
     entry = {
