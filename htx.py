@@ -54,41 +54,6 @@ def put_config_json(j):
 def gen_config(full):
 
     if full:
-        dt = {
-            'bridge': False,
-            'lights': [],
-            'sensors': [],
-            'url': '',
-            'text': '',
-            'notify': True
-        }
-
-        su = {
-            'updatestate': 0,
-            'checkforupdate': False,
-            'devicetypes': dt
-        }
-
-        pc = {
-            'signedon': False,
-            'incoming': False,
-            'outgoing': False,
-            'communication': 'disconnected'
-        }
-
-        b = {
-            'status': 'idle',
-            'errorcode': 0
-        }
-        
-        key = {
-            'last use date': gen_ts(),
-            'create date': '2014-04-08T08:55:10',
-            'name': devicetype
-        }
-
-        wl = { '%s' % username: key }
-
         answer = {
             'name': "Virtual hue",
             'datastoreversion': '59',
@@ -105,15 +70,40 @@ def gen_config(full):
             'timezone': 'Europe/Amsterdam',
             'swversion': '01038802',
             'apiversion': '1.2.1',
-            'swupdate': su,
+            'swupdate': {
+                'updatestate': 0,
+                    'checkforupdate': False,
+                'devicetypes': {
+                    'bridge': False,
+                    'lights': [],
+                    'sensors': [],
+                    'url': '',
+                    'text': '',
+                    'notify': True
+                 }
+            },
             'linkbutton': True,
             'portalservices': False,
             'portalconnection': 'disconnected',
-            'portalstate': pc,
+            'portalstate': {
+                'signedon': False,
+                'incoming': False,
+                'outgoing': False,
+                'communication': 'disconnected'
+            },
             'factorynew': False,
             'replacesbridgeid': None,
-            'backup': b,
-            'whitelist': wl,
+            'backup': {
+                'status': 'idle',
+                'errorcode': 0
+            },
+            'whitelist': {
+                '%s' % username: {
+		    'last use date': gen_ts(),
+		    'create date': '2014-04-08T08:55:10',
+		    'name': devicetype
+		}
+            },
             'bridgeid': bridgeid,
             'modelid': '666'
         }
