@@ -51,6 +51,17 @@ def put_config_json(j):
         global portalservices
         portalservices = entry['portalservices']
 
+def unreg():
+        answer = {
+			"error": {
+				"type": 1,
+				"address": "/",
+				"description": "unauthorized user"
+			}
+		}
+
+	return [ answer ]
+
 def gen_config(full):
 
     if full:
@@ -371,7 +382,7 @@ class server(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        print 'GET', self.path
+        print 'GET', self.client_address, self.path
         parts = self.path.split('/')
 
         if self.path == '/%s' % description_xml:
@@ -458,8 +469,10 @@ class server(BaseHTTPRequestHandler):
                 self.wfile.write(gen_config_json(False))
 
         else:
-            print 'unknown get request', self.path
-            self.wfile.write(gen_config_json(False))
+            self._set_headers("application/json")
+            print '[G] unknown get request', self.path, self.headers
+            self.wfile.write(unreg())
+            #self.wfile.write('[{"error":{"type":1,"address":"/","description":"unauthorized user"}}]')
 
     def do_HEAD(self):
         self._set_headers("text/html")
