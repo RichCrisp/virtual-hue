@@ -37,6 +37,15 @@ username = "83b7780291a6ceffbe0bd049104df"
 devicetype = "something"
 portalservices = False
 
+api_version = '1.21.0'
+sw_version = '01038802'
+model_id = 'BSB01'
+datastoreversion = '59'
+name = 'Virtual Hue'
+
+# ---
+regpost = False
+
 def gen_ts():
     return time.strftime('%Y-%m-%dT%H:%M:%S')
 
@@ -66,9 +75,9 @@ def gen_config(full):
 
     if full:
         answer = {
-            'name': "Virtual hue",
-            'datastoreversion': '59',
+            'name': name,
             'zigbeechannel': 15,
+            'bridgeid': bridgeid,
             'mac': ':'.join(mac),
             'dhcp': False,
             'ipaddress': main_config['listen-address'],
@@ -79,8 +88,10 @@ def gen_config(full):
             'UTC': gen_ts(),
             'localtime': gen_ts(),
             'timezone': 'Europe/Amsterdam',
-            'swversion': '01038802',
-            'apiversion': '1.2.1',
+            'modelid': model_id,
+            'datastoreversion': datastoreversion,
+            'swversion': sw_version,
+            'apiversion': api_version,
             'swupdate': {
                 'updatestate': 0,
                     'checkforupdate': False,
@@ -114,22 +125,20 @@ def gen_config(full):
 		    'create date': '2014-04-08T08:55:10',
 		    'name': devicetype
 		}
-            },
-            'bridgeid': bridgeid,
-            'modelid': '666'
+            }
         }
 
     else:
         answer = {
-            'name': 'Virtual hue',
-            'datastoreversion': '59',
-            'swversion': '01038802',
-            'apiversion': '1.2.1',
+            'name': name,
+            'apiversion': api_version,
+            'swversion': sw_version,
             'mac': ':'.join(mac),
             'bridgeid': bridgeid,
-            'factorynew': False,
             'replacesbridgeid': None,
-            'modelid': '666'
+            'factorynew': False,
+            'datastoreversion': datastoreversion,
+            'modelid': model_id
         }
 
     return answer
@@ -349,15 +358,15 @@ def gen_description_xml(addr):
         '<URLBase>http://%s/</URLBase>' % addr,
         '<device>',
         '<deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>',
-        '<friendlyName>Virtual hue</friendlyName>',
+        '<friendlyName>%s</friendlyName>' % name,
         '<manufacturer>vanheusden.com</manufacturer>',
         '<manufacturerURL>http://www.vanheusden.com</manufacturerURL>',
         '<modelDescription>Virtual Philips hue bridge</modelDescription>',
-        '<modelName>Virtual hue</modelName>',
+        '<modelName>%s</modelName>' % name,
         '<modelNumber>1</modelNumber>',
         '<modelURL>https://github.com/flok99/virtual-hue</modelURL>',
         '<serialNumber>%s</serialNumber>' % ''.join(mac),
-        '<UDN>uuid:%s/UDN>' % uid,
+        '<UDN>uuid:%s</UDN>' % uid,
         '<presentationURL>index.html</presentationURL>',
         '<iconList>',
         '<icon>',
@@ -382,7 +391,7 @@ class server(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        print 'GET', self.client_address, self.path
+        print 'GET', self.client_address, self.path, self.headers
         parts = self.path.split('/')
 
         if self.path == '/%s' % description_xml:
@@ -475,10 +484,11 @@ class server(BaseHTTPRequestHandler):
             #self.wfile.write('[{"error":{"type":1,"address":"/","description":"unauthorized user"}}]')
 
     def do_HEAD(self):
+        print 'HEAD', self.client_address, self.path, self.headers
         self._set_headers("text/html")
         
     def do_POST(self):
-        print 'POST', self.path
+        print 'POST', self.client_address, self.path, self.headers
         parts = self.path.split('/')
 
         # simpler registration; always return the same key
@@ -487,19 +497,27 @@ class server(BaseHTTPRequestHandler):
             self._set_headers("application/json")
 
             data_len = int(self.headers['Content-Length'])
-            print self.rfile.read(data_len)
+            print 'postdata ', self.rfile.read(data_len)
 
-            self.wfile.write('[{"success":{"username": "%s"}}]' % username)
+            global regpost
+            if regpost:
+		    self.wfile.write('[{"success":{"username": "%s"}}]' % username)
+            else:
+                    self.wfile.write('[ { "error": { "type": 101, "address": "", "description": "link button not pressed" } } ]')
+
+            regpost = not regpost
 
         elif len(parts) >= 4 and parts[1] == 'api' and parts['3'] == 'groups':
             self._set_headers("application/json")
             self.wfile.write('[{"success":{"id": "1"}}]')
+            print 'postdata ', self.rfile.read(data_len)
 
         else:
             print 'unknown post request', self.path
+            print 'postdata ', self.rfile.read(data_len)
 
     def do_PUT(self):
-        print 'PUT', self.path
+        print 'PUT', self.client_address, self.path, self.headers
         data_len = int(self.headers['Content-Length'])
         content = self.rfile.read(data_len)
 
